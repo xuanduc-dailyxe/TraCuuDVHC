@@ -161,6 +161,7 @@
         if (callback) callback(null, null);
         return;
       }
+      console.log('Tra cứu ID:', inputId);
       // Kiểm tra localStorage trước
       let cacheKey = 'ptracuu_' + inputId;
       let cached = localStorage.getItem(cacheKey);
