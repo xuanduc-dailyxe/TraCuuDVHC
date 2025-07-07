@@ -103,7 +103,7 @@
         </div>
       </div>
     </div>
-
+    <p id="detail"></p>
     <h3 class="mt-4">Danh sách:</h3>
     <div id="resultTable" class="mt-4"></div>
     <div id="editor" class="mt-4"></div>
@@ -312,9 +312,11 @@
 
       // Tìm name tương ứng với tentinh
       let provinceName = null;
+      let provinceItems = [];
       for (let p of provinceMap) {
         if (p.item.some(i => i.toLowerCase() === tentinh.toLowerCase())) {
           provinceName = p.name;
+          provinceItems = p.item;
           break;
         }
       }
@@ -322,6 +324,10 @@
         alert('Không tìm thấy tỉnh/thành1: ' + tentinh);
         return;
       }
+      // Hiển thị tên name và danh sách item lên tiêu đề danh sách
+      if (provinceName && provinceItems.length > 0) { 
+        $("#detail").html(`${provinceItems.join(', ')} => ${provinceName} `); 
+      }  
       // Chọn selectpicker theo name (so sánh chứa chuỗi, không so sánh chính xác)
       let found = false;
       $('#inputId option').each(function () {
