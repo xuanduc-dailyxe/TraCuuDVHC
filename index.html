@@ -325,8 +325,8 @@
         return;
       }
       // Hiển thị tên name và danh sách item lên tiêu đề danh sách
-      if (provinceName && provinceItems.length > 0) { 
-        $("#detail").html(`${provinceItems.join(', ')} => ${provinceName} `); 
+      if (provinceName && provinceItems.length > 1) { 
+        $("#detail").html(`<strong>Sát nhập tỉnh:</strong> ${provinceItems.join(', ')} => <strong>${provinceName}</strong>`); 
       }  
       // Chọn selectpicker theo name (so sánh chứa chuỗi, không so sánh chính xác)
       let found = false;
