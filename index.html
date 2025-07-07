@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tra cứu Sáp nhập</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/css/bootstrap-select.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <style>
+    #editor { height: 400px; border: 1px solid #ccc; margin-top: 20px; }
+    .CodeMirror{
+        height: 100%;
+    }
+
+    #resultValue {
+        font-size: 120%;
+        font-weight: bold;
+        color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h2 class="mb-4">Tra cứu Sáp nhập Địa phương</h2>
+
+    <div class="form-group">
+      <label for="searchInput">Tìm kiếm:</label>
+      <div class="input-group mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Nhập ví dụ: Phường An Phú, TP.Thủ Đức, TP.HCM">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" id="searchBtn">Tìm</button>
+        </div>
+      </div>
+      <label for="inputId">Chọn Tỉnh/Thành:</label>
+      <select id="inputId" class="selectpicker form-control" data-live-search="true" title="Chọn tỉnh..."> 
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="resultValue">Địa chỉ mới:</label>
+      <div class="input-group">
+        <input type="text" id="resultValue" class="form-control">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" id="copyBtn">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="mt-4">Danh sách:</h3>
+    <div id="resultTable" class="mt-4"></div>
+    <div id="editor" class="mt-4"></div>
+  </div>
+
+  <!-- JS libraries -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/js/bootstrap-select.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+
+  <script>
+    const editor = CodeMirror(document.getElementById('editor'), {
+      mode: 'application/json',
+      lineNumbers: true,
+      theme: 'default',
+      readOnly: true,
+        height: '1400px'
+    });
+
+    // Load danh sách tỉnh/thành
+    function loadTinhThanh() {
+      fetch("https://sapnhap.bando.com.vn/pcotinh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `id=0`
+      })
+        .then(res => res.json())
+        .then(data => {
+          const $select = $('#inputId');
+          $select.empty();
+          data.forEach(item => {
+            $select.append(
+              $('<option>', {
+                value: item.id,
+                text: item.tentinh
+              })
+            );
+          });
+          $select.selectpicker('refresh');
+        })
+        .catch(err => {
+          alert("Không thể tải danh sách tỉnh/thành");
+        });
+    }
+
+
+    function traCuu(callback) {
+      const inputId = $('#inputId').val();
+      if (!inputId) {
+        alert("Vui lòng chọn tỉnh/thành.");
+        if (callback) callback(null, null);
+        return;
+      }
+      // Kiểm tra localStorage trước
+      let cacheKey = 'ptracuu_' + inputId;
+      let cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        let cacheObj = JSON.parse(cached);
+        // cacheObj: {filtered, raw}
+        processData(cacheObj.raw, false); // hiển thị lại từ raw, không lưu lại cache nữa
+        if (callback) callback(cacheObj.filtered, cacheObj.raw);
+        return;
+      }
+      fetch("https://sapnhap.bando.com.vn/ptracuu", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `id=${encodeURIComponent(inputId)}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        processData(data, true);
+      })
+      .catch(err => {
+        editor.setValue(`Lỗi khi gọi API:\n${err}`);
+        $('#resultTable').html('<div class="text-danger">Lỗi khi gọi API</div>');
+        if (callback) callback(null, null);
+      });
+
+      function processData(data, saveToCache) {
+        // Chỉ lấy các thuộc tính cần thiết
+        function pickFields(obj) {
+          return {
+            id: obj.id,
+            loai: obj.loai,
+            tenhc: obj.tenhc,
+            tentinh: obj.tentinh,
+            truocsapnhap: obj.truocsapnhap
+          };
+        }
+        let filtered;
+        if (Array.isArray(data)) {
+          filtered = data.map(pickFields);
+        } else if (typeof data === 'object' && data !== null) {
+          filtered = pickFields(data);
+        } else {
+          filtered = data;
+        }
+        editor.setValue(JSON.stringify(filtered, null, 2));
+
+        // Hiển thị bảng HTML
+        function renderTable(rows) {
+          if (!Array.isArray(rows)) rows = [rows];
+          if (!rows.length) return '<div>Không có dữ liệu</div>';
+          let html = '<table class="table table-bordered table-striped">';
+          html += '<thead><tr>';
+          html += '<th>STT</th><th>ID</th><th>Tên Hành Chính</th><th>Tỉnh/Thành</th><th>Trước Sáp Nhập</th>';
+          html += '</tr></thead><tbody>';
+          rows.forEach((row, idx) => {
+            html += '<tr>' +
+              `<td>${idx + 1}</td>` +
+              `<td>${row.id ?? ''}</td>` +
+              `<td>${row.tenhc ?? ''}</td>` +
+              `<td>${row.tentinh ?? ''}</td>` +
+              `<td>${row.truocsapnhap ?? ''}</td>` +
+              '</tr>';
+          });
+          html += '</tbody></table>';
+          return html;
+        }
+        $('#resultTable').html(renderTable(filtered));
+        if (saveToCache) {
+          // Lưu cả filtered và raw để callback dùng lại
+          localStorage.setItem(cacheKey, JSON.stringify({filtered, raw: data}));
+        }
+        if (callback) callback(filtered, data);
+      }
+    }
+
+
+    $('#readBtn').on('click', function() { traCuu(); });
+    $('#inputId').on('changed.bs.select', function() { traCuu(); });
+
+    // Xử lý tìm kiếm theo input
+    $('#searchBtn').on('click', handleSearch);
+    $('#searchInput').on('keypress', function(e) {
+      if (e.which === 13) handleSearch();
+    });
+    // Khi dán dữ liệu vào input thì tự động tìm kiếm
+    $('#searchInput').on('paste', function(e) {
+      setTimeout(function() {
+        $('#searchBtn').trigger('click');
+      }, 0);
+    });
+
+    function handleSearch() {
+      let val = $('#searchInput').val().trim();
+      if (!val) return;
+      // Chuẩn hóa tên TP.HCM
+      val = val.replace(/TP\. ?HCM|TP\. ?Hồ Chí Minh|Thành Phố Hồ Chí Minh/gi, 'thành phố Hồ Chí Minh'); 
+      val = val.replace(/Phường/g, '').replace(/TP./g, '').replace("P.",  "").replace(/Xã/g, '')
+      val = val.replace("Tỉnh ", "");
+      // Tách tỉnh/thành cuối cùng
+      const parts = val.split(',').map(s => s.trim());
+      if (parts.length < 2) {
+        alert('Vui lòng nhập đúng định dạng: "Phường An Phú, TP.Thủ Đức, TP.HCM"');
+        return;
+      }
+      let tentinh = parts[parts.length - 1];
+      tentinh = tentinh.replace(/TP\.?\s*/gi, "").trim();
+      // Danh sách ánh xạ tỉnh/thành
+      const provinceMap = [
+        { "name": "Hà Nội", "item": ["Hà Nội"] },
+        { "name": "Huế", "item": ["Huế"] },
+        { "name": "Lai Châu", "item": ["Lai Châu"] },
+        { "name": "Điện Biên", "item": ["Điện Biên"] },
+        { "name": "Sơn La", "item": ["Sơn La"] },
+        { "name": "Lạng Sơn", "item": ["Lạng Sơn"] },
+        { "name": "Quảng Ninh", "item": ["Quảng Ninh"] },
+        { "name": "Thanh Hoá", "item": ["Thanh Hoá"] },
+        { "name": "Nghệ An", "item": ["Nghệ An"] },
+        { "name": "Hà Tĩnh", "item": ["Hà Tĩnh"] },
+        { "name": "Cao Bằng", "item": ["Cao Bằng"] },
+        { "name": "Tuyên Quang", "item": ["Hà Giang", "Tuyên Quang"] },
+        { "name": "Lào Cai", "item": ["Lào Cai", "Yên Bái"] },
+        { "name": "Thái Nguyên", "item": ["Bắc Kạn", "Thái Nguyên"] },
+        { "name": "Phú Thọ", "item": ["Phú Thọ", "Vĩnh Phúc", "Hoà Bình"] },
+        { "name": "Bắc Ninh", "item": ["Bắc Ninh", "Bắc Giang"] },
+        { "name": "Hưng Yên", "item": ["Hưng Yên", "Thái Bình"] },
+        { "name": "Hải Phòng", "item": ["Hải Phòng", "Hải Dương"] },
+        { "name": "Ninh Bình", "item": ["Ninh Bình", "Hà Nam", "Nam Định"] },
+        { "name": "Quảng Trị", "item": ["Quảng Trị", "Quảng Bình"] },
+        { "name": "Đà Nẵng", "item": ["Đà Nẵng", "Quảng Nam"] },
+        { "name": "Quảng Ngãi", "item": ["Quảng Ngãi", "Kon Tum"] },
+        { "name": "Gia Lai", "item": ["Gia Lai", "Bình Định"] },
+        { "name": "Khánh Hòa", "item": ["Khánh Hòa", "Ninh Thuận"] },
+        { "name": "Lâm Đồng", "item": ["Lâm Đồng", "Đắk Nông", "Bình Thuận"] },
+        { "name": "Đắk Lắk", "item": ["Đắk Lắk", "Phú Yên"] },
+        { "name": "Thành phố Hồ Chí Minh", "item": ["Hồ Chí Minh", "Bình Dương", "Bà Rịa–Vũng Tàu"] },
+        { "name": "Đồng Nai", "item": ["Đồng Nai", "Bình Phước"] },
+        { "name": "Tây Ninh", "item": ["Tây Ninh", "Long An"] },
+        { "name": "Cần Thơ", "item": ["Cần Thơ", "Sóc Trăng", "Hậu Giang"] },
+        { "name": "Vĩnh Long", "item": ["Vĩnh Long", "Bến Tre", "Trà Vinh"] },
+        { "name": "Đồng Tháp", "item": ["Đồng Tháp", "Tiền Giang"] },
+        { "name": "Cà Mau", "item": ["Cà Mau", "Bạc Liêu"] },
+        { "name": "An Giang", "item": ["An Giang", "Kiên Giang"] }
+      ];
+
+      // Tìm name tương ứng với tentinh
+      let provinceName = null;
+      for (let p of provinceMap) {
+        if (p.item.some(i => i.toLowerCase() === tentinh.toLowerCase())) {
+          provinceName = p.name;
+          break;
+        }
+      }
+      if (!provinceName) {
+        alert('Không tìm thấy tỉnh/thành: ' + tentinh);
+        return;
+      }
+      // Chọn selectpicker theo name (so sánh chứa chuỗi, không so sánh chính xác)
+      let found = false;
+      $('#inputId option').each(function() {
+        if ($(this).text().trim().toLowerCase().includes(provinceName.toLowerCase())) {
+          $('#inputId').selectpicker('val', $(this).val());
+          found = true;
+          return false;
+        }
+      });
+      if (!found) {
+        alert('Không tìm thấy tỉnh/thành: ' + provinceName);
+        return;
+      }
+      // Gọi traCuu và xử lý kết quả
+      traCuu(function(filtered, rawData) {
+        if (!filtered) return;
+        // Lấy phần tử đầu tiên trong chuỗi
+        const tenSearch = parts[0];
+        console.log('Searching for:', tenSearch);
+        let arr = Array.isArray(filtered) ? filtered : [filtered];
+        let match = arr.find(item => {
+          if (!item.truocsapnhap) return false;
+          // truocsapnhap có thể là mảng hoặc chuỗi
+          if (Array.isArray(item.truocsapnhap)) {
+            return item.truocsapnhap.some(x => x.tenhc && x.tenhc.toLowerCase().includes(tenSearch.toLowerCase()));
+          } else if (typeof item.truocsapnhap === 'string') {
+            return item.truocsapnhap.toLowerCase().includes(tenSearch.toLowerCase());
+          } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
+            return item.truocsapnhap.tenhc.toLowerCase().includes(tenSearch.toLowerCase());
+          }
+          return false;
+        });
+        let resultStr = '';
+        console.log('Match found:', match);
+        if (match) {
+          // Nếu truocsapnhap là mảng, lấy phần tử phù hợp (tìm theo includes)
+          let tenhc = '';
+          if (Array.isArray(match.truocsapnhap)) {
+            let foundObj = match.truocsapnhap.find(x => x.tenhc && x.tenhc.toLowerCase().includes(tenSearch.toLowerCase()));
+            tenhc = foundObj ? foundObj.tenhc : '';
+          } else if (typeof match.truocsapnhap === 'object' && match.truocsapnhap.tenhc) {
+            tenhc = match.truocsapnhap.tenhc;
+          } else if (typeof match.truocsapnhap === 'string') { 
+            // Viết hoa chữ cái đầu của match.loai
+            let loaiStr = match.loai ? match.loai.charAt(0).toUpperCase() + match.loai.slice(1) : '';
+            tenhc = loaiStr + " " + match.tenhc;
+          }
+          resultStr = tenhc + ', ' + match.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM');
+        } else {
+          resultStr = '';
+        }
+        $('#resultValue').val(resultStr);
+        if (resultStr.length > 0) {
+          $('#copyBtn').trigger('click');
+        }
+      });
+    }
+
+    // Copy to clipboard
+    $('#copyBtn').on('click', function() {
+      const val = $('#resultValue').val();
+      if (!val) return;
+      navigator.clipboard.writeText(val).then(function() {
+        $('#copyBtn').text('Đã copy!');
+        setTimeout(() => $('#copyBtn').text('Copy'), 1500);
+      });
+    });
+
+    // Gọi khi trang tải xong
+    $(document).ready(loadTinhThanh);
+  </script>
+</body>
+</html>
