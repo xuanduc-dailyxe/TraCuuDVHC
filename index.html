@@ -109,6 +109,9 @@
     <h3 class="mt-4">Danh sách:</h3>
     <div id="resultTable"></div>
     <div id="editor" class="mt-4"></div>
+    <div class="text-center p-2">
+      <p>Data lấy từ: <a href="https://sapnhap.bando.com.vn/" target="_blank">sapnhap.bando.com.vn</a></p>
+    </div>
   </div>
 
   <!-- JS libraries -->
@@ -139,7 +142,7 @@
             $select.append(
               $('<option>', {
                 value: item.mahc,
-                text: item.tentinh + " - " + item.id
+                text: item.tentinh
               })
             );
           });
@@ -521,6 +524,8 @@
     $(document).ready(function() {
       loadTinhThanh();
       //loadDataAll();
+
+      $("#searchInput").focus();
     });
   </script>
 </body>
