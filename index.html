@@ -70,13 +70,17 @@
         margin-bottom: 5px;
       }
     }
+
+    .header-title {
+      font-weight: 600;
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
-  <div class="container mt-5">
-    <h2 class="mb-4">Tra cứu Sáp nhập Địa phương</h2>
-
+  <div class="container mt-5"> 
+    <h2 class="mb-4 header-title">Tra cứu Sáp nhập Địa phương</h2>
     <div class="form-group">
       <label for="searchInput">Tìm kiếm:</label>
       <div class="input-group">
@@ -85,7 +89,6 @@
           <button class="btn btn-secondary" type="button" id="clearSearchBtn" title="Xóa nhanh" style="display:none;background-color: transparent;color: #333;border: none;position: absolute;top: -2px;right: 60px;z-index: 1000;box-shadow: none; font-size: 120%;">&times;</button>
           <button class="btn btn-primary" type="button" id="searchBtn">Tìm</button>
         </div>
-
       </div>
       <small>Ví dụ: Phường An Phú, TP.Thủ Đức, TP.HCM</small>
     </div>
@@ -94,7 +97,6 @@
       <select id="inputId" class="selectpicker form-control" data-live-search="true" title="Chọn tỉnh...">
       </select>
     </div>
-
     <div class="form-group">
       <label for="resultValue">Địa chỉ mới:</label>
       <div class="input-group">
@@ -108,7 +110,9 @@
     <p id="detail"></p>
     <p id="detail2"></p>
     <p><a class="btn-link" href="https://thuvienphapluat.vn/phap-luat/ho-tro-phap-luat/toan-bo-34-nghi-quyet-sap-xep-don-vi-hanh-chinh-cap-xa-ca-nuoc-nam-2025-tai-toan-bo-34-nghi-quyet-s-978819-221767.html" target="_blank">Xem danh sách nghị quyết</a></p>
-    <h3 class="mt-4">Danh sách:</h3>
+
+
+    <h3 class="mt-4">Danh sách đơn vị hành chính:</h3>
     <div id="resultTable"></div>
     <div id="editor" class="mt-4"></div>
     <div class="text-center p-2">
@@ -484,7 +488,7 @@
             $("#warning").html(`<strong style="color:red">Không tìm thấy kết quả phù hợp!. (Có thể Phường/xã cũ đã sát nhập thành phường xã mới trước ngày 1/7). </strong> <a class="btn-link" href="${googleLink}" target="_blank">Tìm trên Google</a>`);
           }
         } else {
-          resultStr = ''; 
+          resultStr = '';
           let googleLink = makeGoogleSearchLink($('#searchInput').val());
           $("#warning").html(`<strong style="color:red">Không tìm thấy kết quả phù hợp!. (Có thể Phường/xã cũ đã sát nhập thành phường xã mới trước ngày 1/7). </strong> <a class="btn-link" href="${googleLink}" target="_blank">Tìm trên Google</a>`);
         }
@@ -495,11 +499,11 @@
       });
     }
 
-     function makeGoogleSearchLink(val) {
-        if (!val) return ''; 
-        let q = val.trim();
-        return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
-      }
+    function makeGoogleSearchLink(val) {
+      if (!val) return '';
+      let q = val.trim();
+      return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+    }
 
     // Copy to clipboard
     $('#copyBtn').on('click', function () {
