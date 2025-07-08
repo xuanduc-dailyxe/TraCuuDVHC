@@ -220,7 +220,7 @@
           if (!rows.length) return '<div>Không có dữ liệu</div>';
           let html = '<table class="table table-bordered table-striped">';
           html += '<thead><tr>';
-          html += '<th>STT</th><th>ID</th><th>Tên Hành Chính</th><th>Tỉnh/Thành</th><th>Trước Sáp Nhập</th>';
+          html += '<th>STT</th><th>ID</th><th>Tên</th><th>Tỉnh/Thành</th><th>Trước Sáp Nhập</th>';
           html += '</tr></thead><tbody>';
           rows.forEach((row, idx) => {
             html += '<tr>' +
@@ -391,11 +391,11 @@
            console.log("match:", match)
           if(!match){
             match = matches[0];
-            $("#warning").html(`<strong class="text-warning">Kết quả tương đối!!!</strong>`)
+            $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br>Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
           }
         } else if (matches.length > 0) {
           match = matches[0];
-          $("#warning").html(`<strong>Kết quả tương đối!!! Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác, hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
+          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br>Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
         }
         let resultStr = '';
         console.log('Match found:', match);
