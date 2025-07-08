@@ -395,11 +395,11 @@
           console.log("match:", match)
           if (!match) {
             match = matches[0];
-            $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác</li></ul>. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
+            $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
           }
         } else if (matches.length > 0) {
           match = matches[0];
-          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác</li></ul>. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
+          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
         }
         // Hàm tạo chuỗi kết quả địa chỉ mới
         function getResultStr(item) {
