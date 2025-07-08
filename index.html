@@ -282,6 +282,7 @@
       tentinh = tentinh.replace(/TP\.?\s*/gi, "");
       tentinh = tentinh.replace("Thành phố ", "");
       tentinh = tentinh.replace("Thừa Thiên ", "").trim();
+      tentinh = tentinh.replace(" - ", "-").trim();
       // Danh sách ánh xạ tỉnh/thành
       const provinceMap = [
         { "name": "Hà Nội", "item": ["Hà Nội"] },
