@@ -412,7 +412,7 @@
             let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
             tenhc = loaiStr + " " + item.tenhc;
           }
-          let tentinh = item.tentinh ? item.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '').replace(/Thủ đô /gi, '') : '';
+          let tentinh = item.tentinh ? item.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '').replace(/Thủ đô /gi, 'TP. ') : '';
           return (tenhc ? tenhc + ', ' : '') + tentinh;
         }
 
