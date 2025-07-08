@@ -272,7 +272,7 @@
       // Chuẩn hóa tên TP.HCM
       val = val.replace(/TP\. ?HCM|TP\. ?Hồ Chí Minh|Thành Phố Hồ Chí Minh|TP. HCM/gi, 'Hồ Chí Minh');
       val = val.replace(/Phường/g, '').replace(/TP./g, '').replace("P.", "").replace(/Xã/g, '').replace(/Thủ đô /g, '')
-      val = val.replace("Tỉnh ", "");
+      val = val.replace("Tỉnh ", "").replace("TT. ", "").replace("TT ", "");
       // Tách tỉnh/thành cuối cùng
       const parts = val.split(',').map(s => s.trim());
       if (parts.length < 2) {
