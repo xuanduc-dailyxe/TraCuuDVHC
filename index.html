@@ -278,10 +278,11 @@
 
       let tentinh = parts[parts.length - 1];
       // Xóa các ký tự đặc biệt khỏi tentinh
-      tentinh = tentinh.replace(/[^\p{L}\p{N}\s]/gu, ''); 
+      tentinh = tentinh.replace(/[^\p{L}\p{N}\s-]/gu, '');
       tentinh = tentinh.replace(/TP\.?\s*/gi, "");
+      tentinh = tentinh.replace("Tỉnh ", "");
       tentinh = tentinh.replace("Thành phố ", "");
-      tentinh = tentinh.replace("Thừa Thiên ", "").trim();
+      tentinh = tentinh.replace("Thừa Thiên ", "");
       tentinh = tentinh.replace(" - ", "-").trim();
       // Danh sách ánh xạ tỉnh/thành
       const provinceMap = [
@@ -311,7 +312,7 @@
         { "name": "Khánh Hòa", "item": ["Khánh Hòa", "Ninh Thuận"] },
         { "name": "Lâm Đồng", "item": ["Lâm Đồng", "Đắk Nông", "Bình Thuận"] },
         { "name": "Đắk Lắk", "item": ["Đắk Lắk", "Phú Yên"] },
-        { "name": "Thành phố Hồ Chí Minh", "item": ["Hồ Chí Minh", "Bình Dương", "Bà Rịa–Vũng Tàu"] },
+        { "name": "Thành phố Hồ Chí Minh", "item": ["Hồ Chí Minh", "Bình Dương", "Bà Rịa-Vũng Tàu"] },
         { "name": "Đồng Nai", "item": ["Đồng Nai", "Bình Phước"] },
         { "name": "Tây Ninh", "item": ["Tây Ninh", "Long An"] },
         { "name": "Cần Thơ", "item": ["Cần Thơ", "Sóc Trăng", "Hậu Giang"] },
