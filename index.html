@@ -82,8 +82,10 @@
       <div class="input-group">
         <input type="text" id="searchInput" class="form-control" placeholder="Nhập ví dụ: Phường An Phú, TP.Thủ Đức, TP.HCM">
         <div class="input-group-append">
+          <button class="btn btn-secondary" type="button" id="clearSearchBtn" title="Xóa nhanh" style="display:none;background-color: transparent;color: #333;border: none;position: absolute;top: 0;right: 60px;z-index: 1000;box-shadow: none; font-size: 120%;">&times;</button>
           <button class="btn btn-primary" type="button" id="searchBtn">Tìm</button>
         </div>
+
       </div>
       <small>Ví dụ: Phường An Phú, TP.Thủ Đức, TP.HCM</small>
     </div>
@@ -374,7 +376,7 @@
           }
           return false;
         });
-       
+
         let match = null;
         if (matches.length === 1) {
           match = matches[0];
@@ -385,11 +387,11 @@
             if (!item.truocsapnhap) return false;
             if (typeof item.truocsapnhap === 'string') {
               return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
-            }  
+            }
             return false;
           });
-           console.log("match:", match)
-          if(!match){
+          console.log("match:", match)
+          if (!match) {
             match = matches[0];
             $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br>Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
           }
@@ -421,8 +423,28 @@
           // Nếu truocsapnhap là string, hiển thị detail2
           if (typeof match.truocsapnhap === 'string') {
             let loaiStr = match.loai ? match.loai.charAt(0).toUpperCase() + match.loai.slice(1) : '';
-            let tenhc = loaiStr + " " + match.tenhc;
-            $("#detail2").html(`<strong>Trước sát nhập:</strong> ${match.truocsapnhap} => <strong>${tenhc}</strong>`);
+            let tenhc = match.tenhc || '';
+            // Highlight các từ khớp với match.tenhc trong match.truocsapnhap (không phân biệt hoa thường, có dấu/không dấu)
+            function highlightMatch(text, keyword) {
+              if (!keyword) return text;
+              // Loại bỏ dấu tiếng Việt cho so sánh
+              function removeVietnameseTones(str) {
+                return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+              }
+              let textNoSign = removeVietnameseTones(text.toLowerCase());
+              let keywordNoSign = removeVietnameseTones(keyword.toLowerCase());
+              // Tìm vị trí keyword trong text (không dấu)
+              let idx = textNoSign.indexOf(keywordNoSign);
+              if (idx === -1) return text;
+              // Lấy đoạn gốc tương ứng
+              let before = text.slice(0, idx);
+              let matchPart = text.slice(idx, idx + keyword.length);
+              let after = text.slice(idx + keyword.length);
+              return before + '<span style="background:yellow">' + matchPart + '</span>' + after;
+            }
+            let truocHtml = highlightMatch(match.truocsapnhap, tenhc);
+            let tenhcHtml = loaiStr + " " + tenhc;
+            $("#detail2").html(`<strong>Trước sát nhập:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>`);
             setTimeout(function () {
               $("#resultTable tr").removeClass("table-success");
               $("#resultTable tr").each(function () {
@@ -523,11 +545,24 @@
     }
 
     // Gọi khi trang tải xong
-    $(document).ready(function() {
+    $(document).ready(function () {
       loadTinhThanh();
       //loadDataAll();
 
       $("#searchInput").focus();
+
+      // Hiện/ẩn nút xóa nhanh cho searchInput
+      $('#searchInput').on('input', function () {
+        if ($(this).val().length > 0) {
+          $('#clearSearchBtn').show();
+        } else {
+          $('#clearSearchBtn').hide();
+        }
+      });
+      $('#clearSearchBtn').on('click', function () {
+        $('#searchInput').val('').focus();
+        $(this).hide();
+      });
     });
   </script>
 </body>
