@@ -79,7 +79,7 @@
 </head>
 
 <body>
-  <div class="container mt-5"> 
+  <div class="container mt-5">
     <h2 class="mb-4 header-title">Tra cứu Sáp nhập Địa phương</h2>
     <div class="form-group">
       <label for="searchInput">Tìm kiếm:</label>
@@ -384,6 +384,7 @@
         });
 
         let match = null;
+        let detail2Html = '';
         if (matches.length === 1) {
           match = matches[0];
         } else if (matches.length > 1 && parts.length === 3) {
@@ -399,58 +400,68 @@
           console.log("match:", match)
           if (!match) {
             match = matches[0];
-            $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
           }
+          // Thông báo cảnh báo
+          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
+          // Hiển thị tất cả các matches trong detail2, chỉ duyệt các item khớp với mid (parts[1])
+          detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>';
+          matches.forEach(item => {
+            let isMatchMid = false;
+            if (parts.length === 3) {
+              let mid = removeVietnameseTones(parts[1].toLowerCase().trim());
+              if (typeof item.truocsapnhap === 'string') {
+                isMatchMid = removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
+              } else if (Array.isArray(item.truocsapnhap)) {
+                isMatchMid = item.truocsapnhap.some(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(mid));
+              } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
+                isMatchMid = removeVietnameseTones(item.truocsapnhap.tenhc.toLowerCase()).includes(mid);
+              }
+            } else {
+              isMatchMid = true; // Nếu không có mid thì hiển thị tất cả
+            }
+            if (!isMatchMid) return;
+            let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
+            let tenhc = item.tenhc || '';
+            let truocHtml = '';
+            if (typeof item.truocsapnhap === 'string') {
+              truocHtml = highlightMatch(item.truocsapnhap, tenSearch);
+            } else if (Array.isArray(item.truocsapnhap)) {
+              truocHtml = item.truocsapnhap.map(x => x.tenhc ? highlightMatch(x.tenhc, tenSearch) : '').join(', ');
+            }
+            let tenhcHtml = loaiStr + " " + tenhc;
+            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong></li>`;
+          });
+          detail2Html += '</ul></div>';
         } else if (matches.length > 0) {
           match = matches[0];
-          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
-        }
-        // Hàm tạo chuỗi kết quả địa chỉ mới
-        function getResultStr(item) {
-          if (!item) return '';
-          let tenhc = '';
-          if (Array.isArray(item.truocsapnhap)) {
-            let foundObj = item.truocsapnhap.find(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(tenSearchNoSign));
-            tenhc = foundObj ? foundObj.tenhc : '';
-          } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
-            tenhc = item.truocsapnhap.tenhc;
-          } else if (typeof item.truocsapnhap === 'string') {
+          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
+          // Hiển thị tất cả các matches trong detail2
+          detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên:</strong><ul>';
+          matches.forEach(item => {
             let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
-            tenhc = loaiStr + " " + item.tenhc;
-          }
-          let tentinh = item.tentinh ? item.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '').replace(/Thủ đô /gi, 'TP. ') : '';
-          return (tenhc ? tenhc + ', ' : '') + tentinh;
+            let tenhc = item.tenhc || '';
+            let truocHtml = '';
+            if (typeof item.truocsapnhap === 'string') {
+              truocHtml = highlightMatch(item.truocsapnhap, tenSearch);
+            } else if (Array.isArray(item.truocsapnhap)) {
+              truocHtml = item.truocsapnhap.map(x => x.tenhc ? highlightMatch(x.tenhc, tenSearch) : '').join(', ');
+            }
+            let tenhcHtml = loaiStr + " " + tenhc;
+            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong></li>`;
+          });
+          detail2Html += '</ul></div>';
         }
-
         let resultStr = '';
         console.log('Match found:', match);
         if (match) {
           resultStr = getResultStr(match);
-          // Nếu truocsapnhap là string, hiển thị detail2
+          // Nếu truocsapnhap là string, hiển thị detail2 cho match chính
           if (typeof match.truocsapnhap === 'string') {
             let loaiStr = match.loai ? match.loai.charAt(0).toUpperCase() + match.loai.slice(1) : '';
             let tenhc = match.tenhc || '';
-            // Highlight các từ khớp với match.tenhc trong match.truocsapnhap (không phân biệt hoa thường, có dấu/không dấu)
-            function highlightMatch(text, keyword) {
-              if (!keyword) return text;
-              // Loại bỏ dấu tiếng Việt cho so sánh
-              function removeVietnameseTones(str) {
-                return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-              }
-              let textNoSign = removeVietnameseTones(text.toLowerCase());
-              let keywordNoSign = removeVietnameseTones(keyword.toLowerCase());
-              // Tìm vị trí keyword trong text (không dấu)
-              let idx = textNoSign.indexOf(keywordNoSign);
-              if (idx === -1) return text;
-              // Lấy đoạn gốc tương ứng
-              let before = text.slice(0, idx);
-              let matchPart = text.slice(idx, idx + keyword.length);
-              let after = text.slice(idx + keyword.length);
-              return before + '<span style="background:yellow">' + matchPart + '</span>' + after;
-            }
             let truocHtml = highlightMatch(match.truocsapnhap, tenSearch);
             let tenhcHtml = loaiStr + " " + tenhc;
-            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>`);
+            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>` + detail2Html);
             setTimeout(function () {
               $("#resultTable tr").removeClass("table-success");
               $("#resultTable tr").each(function () {
@@ -460,6 +471,9 @@
                 }
               });
             }, 100);
+          } else {
+            // Nếu không phải string, chỉ hiển thị danh sách so sánh
+            if (detail2Html) $("#detail2").html(detail2Html);
           }
         } else if (parts.length == 2) {
           // Lấy parts[0] đã loại bỏ "Phường", "phường", "P.", "p."
@@ -497,6 +511,41 @@
           $('#copyBtn').trigger('click');
         }
       });
+    }
+
+    // Hàm tạo chuỗi kết quả địa chỉ mới
+    function getResultStr(item) {
+      if (!item) return '';
+      let tenhc = '';
+      if (Array.isArray(item.truocsapnhap)) {
+        let foundObj = item.truocsapnhap.find(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(tenSearchNoSign));
+        tenhc = foundObj ? foundObj.tenhc : '';
+      } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
+        tenhc = item.truocsapnhap.tenhc;
+      } else if (typeof item.truocsapnhap === 'string') {
+        let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
+        tenhc = loaiStr + " " + item.tenhc;
+      }
+      let tentinh = item.tentinh ? item.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '').replace(/Thủ đô /gi, 'TP. ') : '';
+      return (tenhc ? tenhc + ', ' : '') + tentinh;
+    }
+
+    function highlightMatch(text, keyword) {
+      if (!keyword) return text;
+      // Loại bỏ dấu tiếng Việt cho so sánh
+      function removeVietnameseTones(str) {
+        return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+      }
+      let textNoSign = removeVietnameseTones(text.toLowerCase());
+      let keywordNoSign = removeVietnameseTones(keyword.toLowerCase());
+      // Tìm vị trí keyword trong text (không dấu)
+      let idx = textNoSign.indexOf(keywordNoSign);
+      if (idx === -1) return text;
+      // Lấy đoạn gốc tương ứng
+      let before = text.slice(0, idx);
+      let matchPart = text.slice(idx, idx + keyword.length);
+      let after = text.slice(idx + keyword.length);
+      return before + '<span style="background:yellow">' + matchPart + '</span>' + after;
     }
 
     function makeGoogleSearchLink(val) {
