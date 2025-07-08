@@ -232,7 +232,7 @@
             html += '<tr>' +
               `<td>${idx + 1}</td>` +
               `<td>${row.id ?? ''}</td>` +
-              `<td>${row.tenhc ?? ''}</td>` +
+              `<td>${row.loai + " " + row.tenhc ?? ''}</td>` +
               `<td>${row.tentinh ?? ''}</td>` +
               `<td>${row.truocsapnhap ?? ''}</td>` +
               '</tr>';
@@ -478,10 +478,7 @@
                 }
               });
             }, 100);
-          } else {
-            // Nếu không phải string, chỉ hiển thị danh sách so sánh
-            if (detail2Html) $("#detail2").html(detail2Html);
-          }
+          }  
         } else if (parts.length == 2) {
           // Lấy parts[0] đã loại bỏ "Phường", "phường", "P.", "p."
           let searchName = parts[0].replace(/Phường|phường|P\.|p\./g, '').trim();
