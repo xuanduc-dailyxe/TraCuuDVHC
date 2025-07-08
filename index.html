@@ -278,9 +278,9 @@
 
       let tentinh = parts[parts.length - 1];
       // Xóa các ký tự đặc biệt khỏi tentinh
-      tentinh = tentinh.replace(/[^\p{L}\p{N}\s]/gu, '').trim();
-
-      tentinh = tentinh.replace(/TP\.?\s*/gi, "").trim();
+      tentinh = tentinh.replace(/[^\p{L}\p{N}\s]/gu, ''); 
+      tentinh = tentinh.replace(/TP\.?\s*/gi, "");
+      tentinh = tentinh.replace("Thành phố ", "");
       tentinh = tentinh.replace("Thừa Thiên ", "").trim();
       // Danh sách ánh xạ tỉnh/thành
       const provinceMap = [
@@ -442,7 +442,7 @@
               let after = text.slice(idx + keyword.length);
               return before + '<span style="background:yellow">' + matchPart + '</span>' + after;
             }
-            let truocHtml = highlightMatch(match.truocsapnhap, tenhc);
+            let truocHtml = highlightMatch(match.truocsapnhap, tenSearch);
             let tenhcHtml = loaiStr + " " + tenhc;
             $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>`);
             setTimeout(function () {
