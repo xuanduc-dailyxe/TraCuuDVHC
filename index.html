@@ -102,6 +102,7 @@
         </div>
       </div>
     </div>
+    <p id="warning"></p>
     <p id="detail"></p>
     <p id="detail2"></p>
     <p><a class="btn-link" href="https://thuvienphapluat.vn/phap-luat/ho-tro-phap-luat/toan-bo-34-nghi-quyet-sap-xep-don-vi-hanh-chinh-cap-xa-ca-nuoc-nam-2025-tai-toan-bo-34-nghi-quyet-s-978819-221767.html" target="_blank">Xem danh sách nghị quyết</a></p>
@@ -128,13 +129,8 @@
 
     // Load danh sách tỉnh/thành
     function loadTinhThanh() {
-      fetch("https://sapnhap.bando.com.vn/pcotinh", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `id=0`
-      })
+      // Đọc file tinhthanh.json nội bộ
+      fetch('tinhthanh.json')
         .then(res => res.json())
         .then(data => {
           const $select = $('#inputId');
@@ -150,7 +146,7 @@
           $select.selectpicker('refresh');
         })
         .catch(err => {
-          alert("Không thể tải danh sách tỉnh/thành");
+          alert("Không thể tải danh sách tỉnh/thành từ file tinhthanh.json");
         });
     }
 
@@ -173,20 +169,24 @@
         if (callback) callback(cacheObj.filtered, cacheObj.raw);
         return;
       }
-      fetch("https://sapnhap.bando.com.vn/ptracuu", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `id=${encodeURIComponent(inputId)}`
-      })
+      // Lấy dữ liệu từ data.json nội bộ
+      fetch('data.json')
         .then(res => res.json())
-        .then(data => {
+        .then(allData => {
+          // Tìm entry theo id (so sánh chuỗi hoặc số)
+          let found = allData.find(item => String(item.id) === String(inputId));
+          if (!found) {
+            editor.setValue('Không tìm thấy dữ liệu cho id: ' + inputId);
+            $('#resultTable').html('<div class="text-danger">Không tìm thấy dữ liệu cho id này</div>');
+            if (callback) callback(null, null);
+            return;
+          }
+          let data = found.data || [];
           processData(data, true);
         })
         .catch(err => {
-          editor.setValue(`Lỗi khi gọi API:\n${err}`);
-          $('#resultTable').html('<div class="text-danger">Lỗi khi gọi API</div>');
+          editor.setValue(`Lỗi khi đọc file data.json:\n${err}`);
+          $('#resultTable').html('<div class="text-danger">Lỗi khi đọc file data.json</div>');
           if (callback) callback(null, null);
         });
 
@@ -358,25 +358,49 @@
         const tenSearch = parts[0];
         console.log('Searching for:', tenSearch);
         let arr = Array.isArray(filtered) ? filtered : [filtered];
-        let match = arr.find(item => {
+        // Tìm tất cả các item khớp với tenSearch (dùng includes, không dấu)
+        let tenSearchNoSign = removeVietnameseTones(tenSearch.toLowerCase());
+        let matches = arr.filter(item => {
           if (!item.truocsapnhap) return false;
-          // truocsapnhap có thể là mảng hoặc chuỗi
           if (Array.isArray(item.truocsapnhap)) {
-            return item.truocsapnhap.some(x => x.tenhc && x.tenhc.toLowerCase().includes(tenSearch.toLowerCase()));
+            return item.truocsapnhap.some(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(tenSearchNoSign));
           } else if (typeof item.truocsapnhap === 'string') {
-            return item.truocsapnhap.toLowerCase().includes(tenSearch.toLowerCase());
+            return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(tenSearchNoSign);
           } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
-            return item.truocsapnhap.tenhc.toLowerCase().includes(tenSearch.toLowerCase());
+            return removeVietnameseTones(item.truocsapnhap.tenhc.toLowerCase()).includes(tenSearchNoSign);
           }
           return false;
         });
+       
+        let match = null;
+        if (matches.length === 1) {
+          match = matches[0];
+        } else if (matches.length > 1 && parts.length === 3) {
+          // Ưu tiên item có truocsapnhap khớp với parts[1] - Quận/Huyện
+          let mid = removeVietnameseTones(parts[1].toLowerCase().trim());
+          match = matches.find(item => {
+            if (!item.truocsapnhap) return false;
+            if (typeof item.truocsapnhap === 'string') {
+              return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
+            }  
+            return false;
+          });
+           console.log("match:", match)
+          if(!match){
+            match = matches[0];
+            $("#warning").html(`<strong class="text-warning">Kết quả tương đối!!!</strong>`)
+          }
+        } else if (matches.length > 0) {
+          match = matches[0];
+          $("#warning").html(`<strong>Kết quả tương đối!!!</strong>`)
+        }
         let resultStr = '';
         console.log('Match found:', match);
         if (match) {
           // Nếu truocsapnhap là mảng, lấy phần tử phù hợp (tìm theo includes)
           let tenhc = '';
           if (Array.isArray(match.truocsapnhap)) {
-            let foundObj = match.truocsapnhap.find(x => x.tenhc && x.tenhc.toLowerCase().includes(tenSearch.toLowerCase()));
+            let foundObj = match.truocsapnhap.find(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(tenSearchNoSign));
             tenhc = foundObj ? foundObj.tenhc : '';
           } else if (typeof match.truocsapnhap === 'object' && match.truocsapnhap.tenhc) {
             tenhc = match.truocsapnhap.tenhc;
@@ -447,8 +471,57 @@
       });
     });
 
+    // Hàm tải toàn bộ dữ liệu các tỉnh/thành và lưu vào localStorage
+    async function loadDataAll() {
+      let res = await fetch('tinhthanh.json');
+      let tinhthanh = await res.json();
+      let allData = [];
+      for (let i = 0; i < tinhthanh.length; i++) {
+        let item = tinhthanh[i];
+        try {
+          let response = await fetch("https://sapnhap.bando.com.vn/ptracuu", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `id=${encodeURIComponent(item.id)}`
+          });
+          let data = await response.json();
+          // Chuẩn hóa dữ liệu lấy về, chỉ lấy các trường cần thiết
+          let extract = (obj) => ({
+            id: obj.id,
+            loai: obj.loai,
+            tenhc: obj.tenhc,
+            tentinh: obj.tentinh,
+            truocsapnhap: obj.truocsapnhap
+          });
+          let result = null;
+          if (Array.isArray(data)) {
+            result = data.map(extract);
+          } else if (typeof data === 'object' && data !== null) {
+            result = extract(data);
+          } else {
+            result = data;
+          }
+          allData.push({
+            mahc: item.mahc,
+            tentinh: item.tentinh,
+            id: item.id,
+            data: result
+          });
+        } catch (e) {
+          allData.push({ mahc: item.mahc, tentinh: item.tentinh, id: item.id, data: null, error: true });
+        }
+        console.log("Đã tải ", item.tentinh);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      localStorage.setItem('listAll', JSON.stringify(allData));
+      alert('Đã tải xong toàn bộ dữ liệu các tỉnh/thành!');
+    }
+
     // Gọi khi trang tải xong
-    $(document).ready(loadTinhThanh);
+    $(document).ready(function() {
+      loadTinhThanh();
+      //loadDataAll();
+    });
   </script>
 </body>
 
