@@ -82,7 +82,7 @@
       <div class="input-group">
         <input type="text" id="searchInput" class="form-control" placeholder="Nhập ví dụ: Phường An Phú, TP.Thủ Đức, TP.HCM">
         <div class="input-group-append">
-          <button class="btn btn-secondary" type="button" id="clearSearchBtn" title="Xóa nhanh" style="display:none;background-color: transparent;color: #333;border: none;position: absolute;top: 0;right: 60px;z-index: 1000;box-shadow: none; font-size: 120%;">&times;</button>
+          <button class="btn btn-secondary" type="button" id="clearSearchBtn" title="Xóa nhanh" style="display:none;background-color: transparent;color: #333;border: none;position: absolute;top: -2px;right: 60px;z-index: 1000;box-shadow: none; font-size: 120%;">&times;</button>
           <button class="btn btn-primary" type="button" id="searchBtn">Tìm</button>
         </div>
 
@@ -444,7 +444,7 @@
             }
             let truocHtml = highlightMatch(match.truocsapnhap, tenhc);
             let tenhcHtml = loaiStr + " " + tenhc;
-            $("#detail2").html(`<strong>Trước sát nhập:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>`);
+            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>`);
             setTimeout(function () {
               $("#resultTable tr").removeClass("table-success");
               $("#resultTable tr").each(function () {
