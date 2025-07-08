@@ -24,7 +24,7 @@
     #resultValue {
       font-size: 120%;
       font-weight: bold;
-      color: red;
+      color: rgb(17, 105, 0);
     }
 
     @media (max-width: 576px) {
@@ -395,7 +395,7 @@
           }
         } else if (matches.length > 0) {
           match = matches[0];
-          $("#warning").html(`<strong>Kết quả tương đối!!!</strong>`)
+          $("#warning").html(`<strong>Kết quả tương đối!!! Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác, hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
         }
         let resultStr = '';
         console.log('Match found:', match);
