@@ -439,7 +439,7 @@
               // Viết hoa chữ cái đầu của match.loai
               let loaiStr = foundObj.loai ? foundObj.loai.charAt(0).toUpperCase() + foundObj.loai.slice(1) : '';
               let tenhc = loaiStr + " " + foundObj.tenhc;
-              resultStr = tenhc + ', ' + foundObj.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '');
+              resultStr = tenhc + ', ' + foundObj.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '').replace(/Thủ đô /gi, '');
               // Highlight dòng trong bảng có id === foundObj.id
               setTimeout(function () {
                 $("#resultTable tr").removeClass("table-success");
