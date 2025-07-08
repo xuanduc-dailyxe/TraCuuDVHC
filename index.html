@@ -393,11 +393,11 @@
           console.log("match:", match)
           if (!match) {
             match = matches[0];
-            $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br>Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
+            $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác</li></ul>. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
           }
         } else if (matches.length > 0) {
           match = matches[0];
-          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br>Có thể Phường/xã trước sát nhập bị trùng hoặc 1 phường/xã sau sát nhập chia ra nhiều phường/xã khác. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
+          $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác</li></ul>. <br>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`)
         }
         // Hàm tạo chuỗi kết quả địa chỉ mới
         function getResultStr(item) {
@@ -477,9 +477,14 @@
             }, 100);
           } else {
             resultStr = '';
+            // Hàm tạo link tìm kiếm Google từ searchInput 
+            let googleLink = makeGoogleSearchLink($('#searchInput').val());
+            $("#warning").html(`<strong style="color:red">Không tìm thấy kết quả phù hợp!. (Có thể Phường/xã cũ đã sát nhập thành phường xã mới trước ngày 1/7). </strong> <a class="btn-link" href="${googleLink}" target="_blank">Tìm trên Google</a>`);
           }
         } else {
-          resultStr = '';
+          resultStr = ''; 
+          let googleLink = makeGoogleSearchLink($('#searchInput').val());
+          $("#warning").html(`<strong style="color:red">Không tìm thấy kết quả phù hợp!. (Có thể Phường/xã cũ đã sát nhập thành phường xã mới trước ngày 1/7). </strong> <a class="btn-link" href="${googleLink}" target="_blank">Tìm trên Google</a>`);
         }
         $('#resultValue').val(resultStr);
         if (resultStr.length > 0) {
@@ -487,6 +492,12 @@
         }
       });
     }
+
+     function makeGoogleSearchLink(val) {
+        if (!val) return ''; 
+        let q = val.trim();
+        return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+      }
 
     // Copy to clipboard
     $('#copyBtn').on('click', function () {
