@@ -470,7 +470,7 @@
       if (!val) return;
       navigator.clipboard.writeText(val).then(function () {
         $('#copyBtn').text('Đã copy!');
-        setTimeout(() => $('#copyBtn').text('Copy'), 1500);
+        setTimeout(() => $('#copyBtn').text('Copy'), 5000);
       });
     });
 
