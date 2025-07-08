@@ -266,6 +266,7 @@
     });
 
     function handleSearch() {
+      $("#warning,#detail,#detail2,#resultTable,#editor").html('');
       let val = $('#searchInput').val().trim();
       if (!val) return;
       // Chuẩn hóa tên TP.HCM
