@@ -86,7 +86,6 @@
         </div>
       </div>
       <small>Ví dụ: Phường An Phú, TP.Thủ Đức, TP.HCM</small>
-
     </div>
     <div class="form-group">
       <label for="inputId">Chọn Tỉnh/Thành:</label>
@@ -104,8 +103,10 @@
       </div>
     </div>
     <p id="detail"></p>
+    <p id="detail2"></p>
+    <p><a class="btn-link" href="https://thuvienphapluat.vn/phap-luat/ho-tro-phap-luat/toan-bo-34-nghi-quyet-sap-xep-don-vi-hanh-chinh-cap-xa-ca-nuoc-nam-2025-tai-toan-bo-34-nghi-quyet-s-978819-221767.html" target="_blank">Xem danh sách nghị quyết</a></p>
     <h3 class="mt-4">Danh sách:</h3>
-    <div id="resultTable" class="mt-4"></div>
+    <div id="resultTable"></div>
     <div id="editor" class="mt-4"></div>
   </div>
 
@@ -141,8 +142,8 @@
           data.forEach(item => {
             $select.append(
               $('<option>', {
-                value: item.id,
-                text: item.tentinh
+                value: item.mahc,
+                text: item.tentinh + " - " + item.id
               })
             );
           });
@@ -268,6 +269,8 @@
         alert('Vui lòng nhập đúng định dạng: "Phường An Phú, TP.Thủ Đức, TP.HCM"');
         return;
       }
+
+
       let tentinh = parts[parts.length - 1];
       // Xóa các ký tự đặc biệt khỏi tentinh
       tentinh = tentinh.replace(/[^\p{L}\p{N}\s]/gu, '').trim();
@@ -283,7 +286,7 @@
         { "name": "Sơn La", "item": ["Sơn La"] },
         { "name": "Lạng Sơn", "item": ["Lạng Sơn"] },
         { "name": "Quảng Ninh", "item": ["Quảng Ninh"] },
-        { "name": "Thanh Hoá", "item": ["Thanh Hoá"] },
+        { "name": "Thanh Hóa", "item": ["Thanh Hóa"] },
         { "name": "Nghệ An", "item": ["Nghệ An"] },
         { "name": "Hà Tĩnh", "item": ["Hà Tĩnh"] },
         { "name": "Cao Bằng", "item": ["Cao Bằng"] },
@@ -312,11 +315,16 @@
         { "name": "An Giang", "item": ["An Giang", "Kiên Giang"] }
       ];
 
-      // Tìm name tương ứng với tentinh
+      // Hàm loại bỏ dấu tiếng Việt
+      function removeVietnameseTones(str) {
+        return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+      }
+      // Tìm name tương ứng với tentinh (so sánh không dấu)
       let provinceName = null;
       let provinceItems = [];
+      let tentinhNoSign = removeVietnameseTones(tentinh.toLowerCase());
       for (let p of provinceMap) {
-        if (p.item.some(i => i.toLowerCase() === tentinh.toLowerCase())) {
+        if (p.item.some(i => removeVietnameseTones(i.toLowerCase()) === tentinhNoSign)) {
           provinceName = p.name;
           provinceItems = p.item;
           break;
@@ -327,9 +335,9 @@
         return;
       }
       // Hiển thị tên name và danh sách item lên tiêu đề danh sách
-      if (provinceName && provinceItems.length > 1) { 
-        $("#detail").html(`<strong>Sát nhập tỉnh:</strong> ${provinceItems.join(', ')} => <strong>${provinceName}</strong>`); 
-      }  
+      if (provinceName && provinceItems.length > 1) {
+        $("#detail").html(`<strong>Sát nhập tỉnh:</strong> ${provinceItems.join(', ')} => <strong>${provinceName}</strong>`);
+      }
       // Chọn selectpicker theo name (so sánh chứa chuỗi, không so sánh chính xác)
       let found = false;
       $('#inputId option').each(function () {
@@ -376,10 +384,51 @@
             // Viết hoa chữ cái đầu của match.loai
             let loaiStr = match.loai ? match.loai.charAt(0).toUpperCase() + match.loai.slice(1) : '';
             tenhc = loaiStr + " " + match.tenhc;
+            $("#detail2").html(`<strong>Trước sát nhập:</strong> ${match.truocsapnhap} => <strong>${tenhc}</strong>`);
+            // Highlight dòng trong bảng có id === match.mahc
+            setTimeout(function () {
+              $("#resultTable tr").removeClass("table-success");
+              $("#resultTable tr").each(function () {
+                let idCell = $(this).find("td").eq(1).text().trim();
+                if (idCell && match.id && idCell === String(match.id)) {
+                  $(this).addClass("table-success");
+                }
+              });
+            }, 100);
           }
-          resultStr = tenhc + ', ' + match.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM');
+          resultStr = tenhc + ', ' + match.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '');
         } else {
-          resultStr = '';
+
+          if (parts.length == 2) {
+            // Lấy parts[0] đã loại bỏ "Phường", "phường", "P.", "p."
+            let searchName = parts[0].replace(/Phường|phường|P\.|p\./g, '').trim();
+            // So sánh không dấu với tenhc trong arr
+            let searchNoSign = removeVietnameseTones(searchName.toLowerCase());
+            let foundObj = arr.find(item => {
+              if (!item.tenhc) return false;
+              return removeVietnameseTones(item.tenhc.toLowerCase()) === searchNoSign;
+            });
+            if (foundObj) {
+              // Viết hoa chữ cái đầu của match.loai
+              let loaiStr = foundObj.loai ? foundObj.loai.charAt(0).toUpperCase() + foundObj.loai.slice(1) : '';
+              let tenhc = loaiStr + " " + foundObj.tenhc;
+              resultStr = tenhc + ', ' + foundObj.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '');
+              // Highlight dòng trong bảng có id === foundObj.id
+              setTimeout(function () {
+                $("#resultTable tr").removeClass("table-success");
+                $("#resultTable tr").each(function () {
+                  let idCell = $(this).find("td").eq(1).text().trim();
+                  if (idCell && foundObj.id && idCell === String(foundObj.id)) {
+                    $(this).addClass("table-success");
+                  }
+                });
+              }, 100);
+            } else {
+              resultStr = '';
+            }
+          } else {
+            resultStr = '';
+          }
         }
         $('#resultValue').val(resultStr);
         if (resultStr.length > 0) {
