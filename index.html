@@ -363,6 +363,8 @@
         alert('Không tìm thấy tỉnh/thành2: ' + provinceName);
         return;
       }
+
+      let countSameInfo = 0;
       // Gọi traCuu và xử lý kết quả
       traCuu(function (filtered, rawData) {
         if (!filtered) return;
@@ -383,9 +385,10 @@
           }
           return false;
         });
-
+        countSameInfo = 0;
         let match = null;
         let detail2Html = '';
+        
         if (matches.length === 1) {
           match = matches[0];
         } else if (matches.length > 1 && parts.length === 3) {
@@ -406,6 +409,7 @@
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
           // Hiển thị tất cả các matches trong detail2, chỉ duyệt các item khớp với mid (parts[1])
           detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>';
+          
           matches.forEach(item => {
             let isMatchMid = false;
             if (parts.length === 3) {
@@ -430,6 +434,7 @@
               truocHtml = item.truocsapnhap.map(x => x.tenhc ? highlightMatch(x.tenhc, tenSearch) : '').join(', ');
             }
             let tenhcHtml = loaiStr + " " + tenhc;
+            countSameInfo++;
             detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong></li>`;
           });
           detail2Html += '</ul></div>';
@@ -448,12 +453,13 @@
               truocHtml = item.truocsapnhap.map(x => x.tenhc ? highlightMatch(x.tenhc, tenSearch) : '').join(', ');
             }
             let tenhcHtml = loaiStr + " " + tenhc;
+            countSameInfo++;
             detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong></li>`;
           });
           detail2Html += '</ul></div>';
         }
         let resultStr = '';
-        console.log('Match found:', match);
+        console.log('countSameInfo:', countSameInfo);
         if (match) {
           resultStr = getResultStr(match);
           // Nếu truocsapnhap là string, hiển thị detail2 cho match chính
@@ -462,7 +468,7 @@
             let tenhc = match.tenhc || '';
             let truocHtml = highlightMatch(match.truocsapnhap, tenSearch);
             let tenhcHtml = loaiStr + " " + tenhc;
-            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>` + detail2Html);
+            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>` + (countSameInfo > 2 ? detail2Html : ''));
             setTimeout(function () {
               $("#resultTable tr").removeClass("table-success");
               $("#resultTable tr").each(function () {
