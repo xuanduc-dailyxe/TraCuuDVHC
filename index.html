@@ -388,7 +388,7 @@
         countSameInfo = 0;
         let match = null;
         let detail2Html = '';
-        
+
         if (matches.length === 1) {
           match = matches[0];
         } else if (matches.length > 1 && parts.length === 3) {
@@ -409,17 +409,13 @@
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
           // Hiển thị tất cả các matches trong detail2, chỉ duyệt các item khớp với mid (parts[1])
           detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>';
-          
+
           matches.forEach(item => {
             let isMatchMid = false;
             if (parts.length === 3) {
               let mid = removeVietnameseTones(parts[1].toLowerCase().trim());
               if (typeof item.truocsapnhap === 'string') {
                 isMatchMid = removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
-              } else if (Array.isArray(item.truocsapnhap)) {
-                isMatchMid = item.truocsapnhap.some(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(mid));
-              } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
-                isMatchMid = removeVietnameseTones(item.truocsapnhap.tenhc.toLowerCase()).includes(mid);
               }
             } else {
               isMatchMid = true; // Nếu không có mid thì hiển thị tất cả
@@ -435,7 +431,7 @@
             }
             let tenhcHtml = loaiStr + " " + tenhc;
             countSameInfo++;
-            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong></li>`;
+            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
         } else if (matches.length > 0) {
@@ -454,7 +450,7 @@
             }
             let tenhcHtml = loaiStr + " " + tenhc;
             countSameInfo++;
-            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong></li>`;
+            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
         }
@@ -468,7 +464,7 @@
             let tenhc = match.tenhc || '';
             let truocHtml = highlightMatch(match.truocsapnhap, tenSearch);
             let tenhcHtml = loaiStr + " " + tenhc;
-            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>` + (countSameInfo > 2 ? detail2Html : ''));
+            $("#detail2").html(`<strong>Sát nhập từ:</strong> ${truocHtml} => <strong>${tenhcHtml}</strong>` + (countSameInfo > 1 ? detail2Html : ''));
             setTimeout(function () {
               $("#resultTable tr").removeClass("table-success");
               $("#resultTable tr").each(function () {
@@ -478,7 +474,7 @@
                 }
               });
             }, 100);
-          }  
+          }
         } else if (parts.length == 2) {
           // Lấy parts[0] đã loại bỏ "Phường", "phường", "P.", "p."
           let searchName = parts[0].replace(/Phường|phường|P\.|p\./g, '').trim();
@@ -521,17 +517,15 @@
     function getResultStr(item) {
       if (!item) return '';
       let tenhc = '';
-      if (Array.isArray(item.truocsapnhap)) {
-        let foundObj = item.truocsapnhap.find(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(tenSearchNoSign));
-        tenhc = foundObj ? foundObj.tenhc : '';
-      } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
-        tenhc = item.truocsapnhap.tenhc;
-      } else if (typeof item.truocsapnhap === 'string') {
-        let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
-        tenhc = loaiStr + " " + item.tenhc;
-      }
+      let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
+      tenhc = loaiStr + " " + item.tenhc;
+      return (tenhc ? tenhc + ', ' : '') + getTenTinhStr(item);
+    }
+
+    function getTenTinhStr(item) {
+      if (!item) return '';
       let tentinh = item.tentinh ? item.tentinh.replace(/thành phố/gi, 'TP.').replace(/Hồ Chí Minh/gi, 'HCM').replace(/tỉnh /gi, '').replace(/Thủ đô /gi, 'TP. ') : '';
-      return (tenhc ? tenhc + ', ' : '') + tentinh;
+      return tentinh;
     }
 
     function highlightMatch(text, keyword) {
