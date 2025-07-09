@@ -371,37 +371,28 @@
         if (!filtered) return;
         // Lấy phần tử đầu tiên trong chuỗi
         const tenSearch = parts[0];
-        console.log('Searching for:', tenSearch);
+        
         let arr = Array.isArray(filtered) ? filtered : [filtered];
         // Tìm tất cả các item khớp với tenSearch (dùng includes, không dấu)
         let tenSearchNoSign = removeVietnameseTones(tenSearch.toLowerCase());
         let matches = arr.filter(item => {
-          if (!item.truocsapnhap) return false;
-          if (Array.isArray(item.truocsapnhap)) {
-            return item.truocsapnhap.some(x => x.tenhc && removeVietnameseTones(x.tenhc.toLowerCase()).includes(tenSearchNoSign));
-          } else if (typeof item.truocsapnhap === 'string') {
-            return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(tenSearchNoSign);
-          } else if (typeof item.truocsapnhap === 'object' && item.truocsapnhap.tenhc) {
-            return removeVietnameseTones(item.truocsapnhap.tenhc.toLowerCase()).includes(tenSearchNoSign);
-          }
-          return false;
+          if (!item.truocsapnhap) return false; 
+          return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(tenSearchNoSign); 
         });
         countSameInfo = 0;
         let match = null;
         let detail2Html = '';
-
+        console.log('Searching for:', tenSearch); 
         if (matches.length === 1) {
           match = matches[0];
         } else if (matches.length > 1 && parts.length === 3) {
           // Ưu tiên item có truocsapnhap khớp với parts[1] - Quận/Huyện
           let mid = removeVietnameseTones(parts[1].toLowerCase().trim());
           match = matches.find(item => {
-            if (!item.truocsapnhap) return false;
-            if (typeof item.truocsapnhap === 'string') {
-              return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
-            }
-            return false;
+            if (!item.truocsapnhap) return false; 
+            return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid); 
           });
+          
           if (!match) {
             match = matches[0];
           }
@@ -409,24 +400,16 @@
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
           // Hiển thị tất cả các matches trong detail2, chỉ duyệt các item khớp với mid (parts[1])
           detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>';
-          matches.forEach(item => {
-            let isMatchMid = false;
-            if (parts.length === 3) {
-              let mid = removeVietnameseTones(parts[1].toLowerCase().trim());
-              if (typeof item.truocsapnhap === 'string') {
-                isMatchMid = removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
-              }
-            } else {
-              isMatchMid = true; // Nếu không có mid thì hiển thị tất cả
-            }
-            if (!isMatchMid) return;
+ 
+          matches.forEach(item => {  
             let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
             let tenhc = item.tenhc || '';
             let tenhcHtml = loaiStr + " " + tenhc;
             countSameInfo++;
-            detail2Html += `<li><strong>Trước:</strong> ${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
+            detail2Html += `<li>${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
+           console.log("detail2Html", detail2Html)
         } else if (matches.length > 0) {
           match = matches[0];
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
@@ -437,7 +420,7 @@
             let tenhc = item.tenhc || '';
             let tenhcHtml = loaiStr + " " + tenhc;
             countSameInfo++;
-            detail2Html += `<li><strong>Trước:</strong> ${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
+            detail2Html += `<li>${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
         }
