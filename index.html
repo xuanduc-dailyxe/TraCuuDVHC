@@ -342,7 +342,7 @@
         }
       }
       if (!provinceName) {
-        alert('Không tìm thấy tỉnh/thành1: ' + tentinh);
+        alert('Không tìm thấy tỉnh/thành: ' + tentinh);
         return;
       }
       // Hiển thị tên name và danh sách item lên tiêu đề danh sách
@@ -358,8 +358,9 @@
           return false;
         }
       });
+      
       if (!found) {
-        alert('Không tìm thấy tỉnh/thành2: ' + provinceName);
+        alert('Không tìm thấy tỉnh/thành: ' + provinceName);
         return;
       }
 
