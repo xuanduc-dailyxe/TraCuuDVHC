@@ -272,20 +272,19 @@
       // Chuẩn hóa tên TP.HCM
       val = val.replace(/TP\. ?HCM|TP\. ?Hồ Chí Minh|Thành Phố Hồ Chí Minh|TP. HCM|TPHCM/gi, 'Hồ Chí Minh');
       val = val.replace(/Phường/g, '').replace(/TP./g, '').replace("P.", "").replace(/Xã/g, '').replace(/Thủ đô /g, '')
-      val = val.replace("Tỉnh ", "").replace("TT. ", "").replace("TT ", "");
+      val = val.replace("TT. ", "").replace("TT ", "");
       // Tách tỉnh/thành cuối cùng
       const parts = val.split(',').map(s => s.trim());
       if (parts.length < 2) {
         alert('Vui lòng nhập đúng định dạng: "Phường An Phú, TP.Thủ Đức, TP.HCM"');
         return;
-      }
-
+      } 
 
       let tentinh = parts[parts.length - 1];
       // Xóa các ký tự đặc biệt khỏi tentinh
       tentinh = tentinh.replace(/[^\p{L}\p{N}\s-]/gu, '');
       tentinh = tentinh.replace(/TP\.?\s*/gi, "");
-      tentinh = tentinh.replace("Tỉnh ", "");
+      tentinh = tentinh.replace("Tỉnh ", "").replace("tỉnh ", "");
       tentinh = tentinh.replace("Thành phố ", "");
       tentinh = tentinh.replace("Thừa Thiên ", "");
       tentinh = tentinh.replace(" - ", "-").trim();
@@ -400,16 +399,14 @@
               return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
             }
             return false;
-          });
-          console.log("match:", match)
+          }); 
           if (!match) {
             match = matches[0];
           }
           // Thông báo cảnh báo
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
           // Hiển thị tất cả các matches trong detail2, chỉ duyệt các item khớp với mid (parts[1])
-          detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>';
-
+          detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>'; 
           matches.forEach(item => {
             let isMatchMid = false;
             if (parts.length === 3) {
@@ -422,16 +419,10 @@
             }
             if (!isMatchMid) return;
             let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
-            let tenhc = item.tenhc || '';
-            let truocHtml = '';
-            if (typeof item.truocsapnhap === 'string') {
-              truocHtml = highlightMatch(item.truocsapnhap, tenSearch);
-            } else if (Array.isArray(item.truocsapnhap)) {
-              truocHtml = item.truocsapnhap.map(x => x.tenhc ? highlightMatch(x.tenhc, tenSearch) : '').join(', ');
-            }
+            let tenhc = item.tenhc || ''; 
             let tenhcHtml = loaiStr + " " + tenhc;
             countSameInfo++;
-            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
+            detail2Html += `<li><strong>Trước:</strong> ${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
         } else if (matches.length > 0) {
@@ -441,21 +432,14 @@
           detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên:</strong><ul>';
           matches.forEach(item => {
             let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
-            let tenhc = item.tenhc || '';
-            let truocHtml = '';
-            if (typeof item.truocsapnhap === 'string') {
-              truocHtml = highlightMatch(item.truocsapnhap, tenSearch);
-            } else if (Array.isArray(item.truocsapnhap)) {
-              truocHtml = item.truocsapnhap.map(x => x.tenhc ? highlightMatch(x.tenhc, tenSearch) : '').join(', ');
-            }
+            let tenhc = item.tenhc || ''; 
             let tenhcHtml = loaiStr + " " + tenhc;
             countSameInfo++;
-            detail2Html += `<li><strong>Trước:</strong> ${truocHtml} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
+            detail2Html += `<li><strong>Trước:</strong> ${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
         }
-        let resultStr = '';
-        console.log('countSameInfo:', countSameInfo);
+        let resultStr = ''; 
         if (match) {
           resultStr = getResultStr(match);
           // Nếu truocsapnhap là string, hiển thị detail2 cho match chính
