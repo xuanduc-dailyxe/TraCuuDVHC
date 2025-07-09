@@ -21,10 +21,33 @@
       font-size: 14px;
     }
 
+    .btn{
+      min-width: 100px;
+    }
+    .btn,
+    .form-control {
+      height: 42px;
+    }
+
+    .btn.dropdown-toggle .filter-option {
+      display: flex;
+      align-items: center;
+    }
+
     #resultValue {
       font-size: 120%;
       font-weight: bold;
       color: rgb(17, 105, 0);
+    }
+
+    .btn.dropdown-toggle {
+      border: 1px solid #ced4da;
+      background-color: transparent;
+      outline: none !important;
+    }
+
+    .selectpicker {
+      outline: none !important;
     }
 
     @media (max-width: 576px) {
@@ -167,31 +190,39 @@
         if (callback) callback(null, null);
         return;
       }
-      console.log('Tra cứu ID:', inputId);
-      // Kiểm tra localStorage trước
-      let cacheKey = 'ptracuu_' + inputId;
-      let cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        let cacheObj = JSON.parse(cached);
-        // cacheObj: {filtered, raw}
-        processData(cacheObj.raw, false); // hiển thị lại từ raw, không lưu lại cache nữa
-        if (callback) callback(cacheObj.filtered, cacheObj.raw);
+      // Kiểm tra localStorage cho toàn bộ data.json
+      let allData = null;
+      let allDataStr = localStorage.getItem('allData');
+      if (allDataStr) {
+        try {
+          allData = JSON.parse(allDataStr);
+        } catch (e) {
+          allData = null;
+        }
+      }
+      function handleAllData(allDataObj) {
+        // Tìm entry theo id (so sánh chuỗi hoặc số)
+        let found = allDataObj.find(item => String(item.id) === String(inputId));
+        if (!found) {
+          editor.setValue('Không tìm thấy dữ liệu cho id: ' + inputId);
+          $('#resultTable').html('<div class="text-danger">Không tìm thấy dữ liệu cho id này</div>');
+          if (callback) callback(null, null);
+          return;
+        }
+        let data = found.data || [];
+        processData(data, false); // không cần lưu cache nữa
+        if (callback) callback(data, data);
+      }
+      if (allData) {
+        handleAllData(allData);
         return;
       }
-      // Lấy dữ liệu từ data.json nội bộ
+      // Nếu chưa có, fetch và lưu vào localStorage
       fetch('data.json')
         .then(res => res.json())
-        .then(allData => {
-          // Tìm entry theo id (so sánh chuỗi hoặc số)
-          let found = allData.find(item => String(item.id) === String(inputId));
-          if (!found) {
-            editor.setValue('Không tìm thấy dữ liệu cho id: ' + inputId);
-            $('#resultTable').html('<div class="text-danger">Không tìm thấy dữ liệu cho id này</div>');
-            if (callback) callback(null, null);
-            return;
-          }
-          let data = found.data || [];
-          processData(data, true);
+        .then(dataJson => {
+          localStorage.setItem('allData', JSON.stringify(dataJson));
+          handleAllData(dataJson);
         })
         .catch(err => {
           editor.setValue(`Lỗi khi đọc file data.json:\n${err}`);
@@ -199,7 +230,7 @@
           if (callback) callback(null, null);
         });
 
-      function processData(data, saveToCache) {
+      function processData(data) {
         // Chỉ lấy các thuộc tính cần thiết
         function pickFields(obj) {
           return {
@@ -241,10 +272,6 @@
           return html;
         }
         $('#resultTable').html(renderTable(filtered));
-        if (saveToCache) {
-          // Lưu cả filtered và raw để callback dùng lại
-          localStorage.setItem(cacheKey, JSON.stringify({ filtered, raw: data }));
-        }
         if (callback) callback(filtered, data);
       }
     }
@@ -371,28 +398,27 @@
         if (!filtered) return;
         // Lấy phần tử đầu tiên trong chuỗi
         const tenSearch = parts[0];
-        
+
         let arr = Array.isArray(filtered) ? filtered : [filtered];
         // Tìm tất cả các item khớp với tenSearch (dùng includes, không dấu)
         let tenSearchNoSign = removeVietnameseTones(tenSearch.toLowerCase());
         let matches = arr.filter(item => {
-          if (!item.truocsapnhap) return false; 
-          return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(tenSearchNoSign); 
+          if (!item.truocsapnhap) return false;
+          return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(tenSearchNoSign);
         });
         countSameInfo = 0;
         let match = null;
         let detail2Html = '';
-        console.log('Searching for:', tenSearch); 
         if (matches.length === 1) {
           match = matches[0];
         } else if (matches.length > 1 && parts.length === 3) {
           // Ưu tiên item có truocsapnhap khớp với parts[1] - Quận/Huyện
           let mid = removeVietnameseTones(parts[1].toLowerCase().trim());
           match = matches.find(item => {
-            if (!item.truocsapnhap) return false; 
-            return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid); 
+            if (!item.truocsapnhap) return false;
+            return removeVietnameseTones(item.truocsapnhap.toLowerCase()).includes(mid);
           });
-          
+
           if (!match) {
             match = matches[0];
           }
@@ -400,8 +426,8 @@
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
           // Hiển thị tất cả các matches trong detail2, chỉ duyệt các item khớp với mid (parts[1])
           detail2Html = '<div class="mt-2"><strong>So sánh các trường hợp trùng tên (lọc theo Quận/Huyện):</strong><ul>';
- 
-          matches.forEach(item => {  
+
+          matches.forEach(item => {
             let loaiStr = item.loai ? item.loai.charAt(0).toUpperCase() + item.loai.slice(1) : '';
             let tenhc = item.tenhc || '';
             let tenhcHtml = loaiStr + " " + tenhc;
@@ -409,7 +435,6 @@
             detail2Html += `<li>${highlightMatch(item.truocsapnhap, tenSearch)} => <strong>${tenhcHtml}, ${getTenTinhStr(item)}</strong></li>`;
           });
           detail2Html += '</ul></div>';
-           console.log("detail2Html", detail2Html)
         } else if (matches.length > 0) {
           match = matches[0];
           $("#warning").html(`<strong style="color:red">Kết quả tương đối!!! <br><ul><li>Có thể Phường/xã trước sát nhập bị trùng tên. </li> <li>Phường/xã sau sát nhập chia ra nhiều phường/xã khác.</li></ul>Hãy kiểm tra lại trong danh sách bên dưới.</strong>`);
