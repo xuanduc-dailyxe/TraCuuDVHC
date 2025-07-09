@@ -534,16 +534,33 @@
       function removeVietnameseTones(str) {
         return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
       }
+      // Tìm và highlight tất cả các từ khớp (không dấu, không phân biệt hoa thường)
       let textNoSign = removeVietnameseTones(text.toLowerCase());
       let keywordNoSign = removeVietnameseTones(keyword.toLowerCase());
-      // Tìm vị trí keyword trong text (không dấu)
-      let idx = textNoSign.indexOf(keywordNoSign);
-      if (idx === -1) return text;
-      // Lấy đoạn gốc tương ứng
-      let before = text.slice(0, idx);
-      let matchPart = text.slice(idx, idx + keyword.length);
-      let after = text.slice(idx + keyword.length);
-      return before + '<span style="background:yellow">' + matchPart + '</span>' + after;
+      if (!keywordNoSign) return text;
+      // Tìm tất cả vị trí khớp
+      let result = '';
+      let lastIdx = 0;
+      let re = new RegExp(keywordNoSign.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      // Tạo mảng các vị trí khớp trong textNoSign
+      let matchArr = [];
+      let m;
+      while ((m = re.exec(textNoSign)) !== null) {
+        matchArr.push(m.index);
+      }
+      if (matchArr.length === 0) return text;
+      // Duyệt từng vị trí khớp và tạo chuỗi highlight
+      for (let i = 0; i < matchArr.length; i++) {
+        let idx = matchArr[i];
+        // Tính vị trí tương ứng trong text gốc
+        // Để đơn giản, lấy substring từ lastIdx đến idx, rồi highlight phần tiếp theo
+        let before = text.slice(lastIdx, idx);
+        let matchPart = text.slice(idx, idx + keyword.length);
+        result += before + '<span style="background:yellow">' + matchPart + '</span>';
+        lastIdx = idx + keyword.length;
+      }
+      result += text.slice(lastIdx);
+      return result;
     }
 
     function makeGoogleSearchLink(val) {
